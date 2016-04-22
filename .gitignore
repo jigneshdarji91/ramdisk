@@ -26,6 +26,9 @@
 *.exe
 *.out
 *.app
+*
+!/**/
+!*.*
 
 # Misc files
 *.db
