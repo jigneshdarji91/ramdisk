@@ -26,17 +26,16 @@
 #include <fcntl.h>
 #include <map>
 
+#include "ramdisk.h"
 #include "debug.h"
 #include "ramnode.h"
-
-static const char *hello_str = "Hello World!\n";
-static const char *hello_path = "/hello";
+#include "constants.h"
 
 static unsigned int ramfs_size = 0;
 static ramnode_id curr_id = 1;
 
-map<string, ramnode_id> m_path;
-map<ramnode_id, ramnode*> m_node;
+map<string, ramnode_id>     m_path;
+map<ramnode_id, ramnode*>   m_node;
 
 static int ramdiskGetAddr(const char *path, struct stat *stbuf)
 {
@@ -47,10 +46,6 @@ static int ramdiskGetAddr(const char *path, struct stat *stbuf)
 	if (strcmp(path, "/") == 0) {
 		stbuf->st_mode = S_IFDIR | 0755;
 		stbuf->st_nlink = 2;
-	} else if (strcmp(path, hello_path) == 0) {
-		stbuf->st_mode = S_IFREG | 0444;
-		stbuf->st_nlink = 1;
-		stbuf->st_size = strlen(hello_str);
 	} else
 		res = -ENOENT;
 
@@ -70,7 +65,6 @@ static int ramdiskReadDir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
-	filler(buf, hello_path + 1, NULL, 0);
 
     log_dbg("end");
 	return 0;
@@ -79,11 +73,6 @@ static int ramdiskReadDir(const char *path, void *buf, fuse_fill_dir_t filler,
 static int ramdiskOpen(const char *path, struct fuse_file_info *fi)
 {
     log_dbg("begin path: %s", path);
-	if (strcmp(path, hello_path) != 0)
-		return -ENOENT;
-
-	if ((fi->flags & 3) != O_RDONLY)
-		return -EACCES;
 
     log_dbg("end");
 	return 0;
@@ -93,19 +82,6 @@ static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
 		      struct fuse_file_info *fi)
 {
     log_dbg("begin path: %s", path);
-	size_t len;
-	(void) fi;
-	if(strcmp(path, hello_path) != 0)
-		return -ENOENT;
-
-	len = strlen(hello_str);
-	if (offset < len) {
-		if (offset + size > len)
-			size = len - offset;
-		memcpy(buf, hello_str + offset, size);
-	} else
-		size = 0;
-
     log_dbg("end");
 	return size;
 }
@@ -148,6 +124,44 @@ static int ramdiskCreate(const char * path, mode_t mode, struct fuse_file_info *
 
 
 static struct fuse_operations ramdisk_oper;
+
+int createRootNode()
+{
+    log_dbg("begin");
+
+    string root_name = "/";
+
+    ramnode *root = new ramnode();
+
+    // ID
+    root->id = curr_id++;
+
+    // Metadata
+    root->name   = root_name;
+    root->type   = TYPE_DIR; 
+    root->size   = 0;
+    root->mode   = MODE_ROOT;
+
+    // Time
+    time(&root->time_create);
+    time(&root->time_access);
+    time(&root->time_modified);
+
+    root->data   = NULL;
+
+    m_path[root->name]   = root->id;
+    m_node[root->id]     = root;
+
+    updateDiskSize(sizeof(ramnode) + root->name.length());
+
+    log_dbg("end");
+}
+
+void updateDiskSize(int size_change)
+{
+    ramfs_size += size_change;
+    log_dbg("new: %d change:%d", ramfs_size, size_change);
+}
 
 int main(int argc, char *argv[])
 {
