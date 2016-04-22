@@ -29,7 +29,13 @@
 static const char *hello_str = "Hello World!\n";
 static const char *hello_path = "/hello";
 
-static int ramdisk_getattr(const char *path, struct stat *stbuf)
+static unsigned int ramfs_size = 0;
+static ramnode_id curr_id = 1;
+
+map<string, ramnode_id> m_path;
+map<ramnode_id, ramnode*> m_node;
+
+static int ramdiskGetAddr(const char *path, struct stat *stbuf)
 {
     log_dbg("begin path: %s", path);
 	int res = 0;
@@ -49,7 +55,7 @@ static int ramdisk_getattr(const char *path, struct stat *stbuf)
 	return res;
 }
 
-static int ramdisk_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+static int ramdiskReadDir(const char *path, void *buf, fuse_fill_dir_t filler,
 			 off_t offset, struct fuse_file_info *fi)
 {
     log_dbg("begin path: %s", path);
@@ -67,7 +73,7 @@ static int ramdisk_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return 0;
 }
 
-static int ramdisk_open(const char *path, struct fuse_file_info *fi)
+static int ramdiskOpen(const char *path, struct fuse_file_info *fi)
 {
     log_dbg("begin path: %s", path);
 	if (strcmp(path, hello_path) != 0)
@@ -80,7 +86,7 @@ static int ramdisk_open(const char *path, struct fuse_file_info *fi)
 	return 0;
 }
 
-static int ramdisk_read(const char *path, char *buf, size_t size, off_t offset,
+static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
 		      struct fuse_file_info *fi)
 {
     log_dbg("begin path: %s", path);
@@ -106,9 +112,9 @@ static struct fuse_operations ramdisk_oper;
 int main(int argc, char *argv[])
 {
     log_dbg("");
-    ramdisk_oper.getattr = ramdisk_getattr;
-    ramdisk_oper.readdir = ramdisk_readdir;
-    ramdisk_oper.open    = ramdisk_open;
-    ramdisk_oper.read    = ramdisk_read;
+    ramdisk_oper.getattr = ramdiskGetAddr;
+    ramdisk_oper.readdir = ramdiskReadDir;
+    ramdisk_oper.open    = ramdiskOpen;
+    ramdisk_oper.read    = ramdiskRead;
 	return fuse_main(argc, argv, &ramdisk_oper, NULL);
 }
