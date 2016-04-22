@@ -21,14 +21,17 @@
 #define __dbg_h__
 
 #include <stdio.h>
+#include <unistd.h>
 #include <errno.h>
 #include <string.h>
 
-#define DEBUGGING_MODE 0
-#define log_err(M, ...) if(DEBUGGING_MODE) fprintf(stdout, "[ERR] %s | %s | %-15s | " M "\n", __DATE__, __TIME__, __FUNCTION__, ##__VA_ARGS__)
-#define log_wrn(M, ...) if(DEBUGGING_MODE) fprintf(stdout, "[WRN] %s | %s | %-15s | " M "\n", __DATE__, __TIME__, __FUNCTION__, ##__VA_ARGS__)
-#define log_inf(M, ...) if(DEBUGGING_MODE) fprintf(stdout, "[INF] %s | %s | %-15s | " M "\n", __DATE__, __TIME__, __FUNCTION__, ##__VA_ARGS__)
-#define log_dbg(M, ...) if(DEBUGGING_MODE) fprintf(stdout, "[DBG] %s | %s | %-15s | " M "\n", __DATE__, __TIME__, __FUNCTION__, ##__VA_ARGS__)
+#define LOG_FILE "/tmp/ramdisk.log"
+
+#define DEBUGGING_MODE 1 
+#define log_err(M, ...) if(DEBUGGING_MODE){ FILE* _log = fopen(LOG_FILE, "a"); do{ fprintf(_log, "[ERR] %06d : %06d %s | %s | %-15s | " M "\n", getpgid(0), getpid(), __DATE__, __TIME__, __FUNCTION__, ##__VA_ARGS__); } while(0); fclose(_log);}
+#define log_inf(M, ...) if(DEBUGGING_MODE){ FILE* _log = fopen(LOG_FILE, "a"); do{ fprintf(_log, "[INF] %06d : %06d %s | %s | %-15s | " M "\n", getpgid(0), getpid(), __DATE__, __TIME__, __FUNCTION__, ##__VA_ARGS__); } while(0); fclose(_log);}
+#define log_wrn(M, ...) if(DEBUGGING_MODE){ FILE* _log = fopen(LOG_FILE, "a"); do{ fprintf(_log, "[WRN] %06d : %06d %s | %s | %-15s | " M "\n", getpgid(0), getpid(), __DATE__, __TIME__, __FUNCTION__, ##__VA_ARGS__); } while(0); fclose(_log);}
+#define log_dbg(M, ...) if(DEBUGGING_MODE){ FILE* _log = fopen(LOG_FILE, "a"); do{ fprintf(_log, "[DBG] %06d : %06d %s | %s | %-15s | " M "\n", getpgid(0), getpid(), __DATE__, __TIME__, __FUNCTION__, ##__VA_ARGS__); } while(0); fclose(_log);}
 
 #endif
 
