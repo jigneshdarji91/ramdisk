@@ -107,6 +107,32 @@ static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
 	return size;
 }
 
+static int ramdiskWrite(const char * path, const char * buf, size_t size, off_t offset, struct fuse_file_info * fi)
+{
+
+}
+
+static int ramdiskMakeDir(const char* path, mode_t mode) 
+{
+}
+
+static int ramdiskRemovedir(const char * path) 
+{
+}
+
+static int ramdiskOpenDir(const char * path, struct fuse_file_info * fi) 
+{
+}
+
+static int ramdiskUnlink(const char * path) 
+{
+}
+
+static int ramdiskCreate(const char * path, mode_t mode, struct fuse_file_info * fi) 
+{
+}
+
+
 static struct fuse_operations ramdisk_oper;
 
 int main(int argc, char *argv[])
@@ -114,7 +140,13 @@ int main(int argc, char *argv[])
     log_dbg("");
     ramdisk_oper.getattr = ramdiskGetAddr;
     ramdisk_oper.readdir = ramdiskReadDir;
+    ramdisk_oper.opendir = ramdiskOpenDir;
     ramdisk_oper.open    = ramdiskOpen;
     ramdisk_oper.read    = ramdiskRead;
+    ramdisk_oper.write   = ramdiskWrite;
+    ramdisk_oper.mkdir   = ramdiskMakeDir;
+    ramdisk_oper.rmdir   = ramdiskRemoveDir;
+    ramdisk_oper.unlink  = ramdiskUnlink;
+    ramdisk_oper.create  = ramdiskCreate;
 	return fuse_main(argc, argv, &ramdisk_oper, NULL);
 }
