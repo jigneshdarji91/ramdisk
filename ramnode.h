@@ -46,9 +46,9 @@ typedef struct _ramnode
     mode_t          mode;
 
     //Time
-    time_t  time_access;
-    time_t  time_modified;
-    time_t  time_create;
+    time_t  atime;
+    time_t  mtime;
+    time_t  ctime;
     
     list<ramnode_id>    child;
 

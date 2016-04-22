@@ -40,24 +40,50 @@ static struct fuse_operations ramdisk_oper;
 map<string, ramnode_id>     m_path;
 map<ramnode_id, ramnode*>   m_node;
 
-static int ramdiskGetAddr(const char *path, struct stat *stbuf)
+static int ramdiskGetAttr(const char *path, struct stat *stbuf)
 {
     log_dbg("begin path: %s", path);
-	int res = 0;
+    memset(stbuf, 0, sizeof(struct stat));
 
-	memset(stbuf, 0, sizeof(struct stat));
-	if (strcmp(path, "/") == 0) {
-		stbuf->st_mode = S_IFDIR | 0755;
-		stbuf->st_nlink = 2;
-	} else
-		res = -ENOENT;
+    if(path == NULL)
+    {
+        return -ENOENT;
+    }
+
+    string path_string = path; 
+    if(m_path.find(path_string) == m_path.end())
+    {
+        log_err("path: %s NOT FOUND", path);
+        return -ENOENT;
+    }
+
+    int retVal = 0;
+
+    ramnode_id id = m_path[path_string];
+    ramnode* node = m_node[id];
+
+    stbuf->st_uid = 0;
+    stbuf->st_gid = 0;
+    stbuf->st_atime = node->atime;
+    stbuf->st_mtime = node->mtime;
+    stbuf->st_ctime = node->ctime;
+
+    if (node->type == TYPE_DIR) {
+        stbuf->st_mode = S_IFDIR | node->mode;
+        stbuf->st_nlink = 2;
+        stbuf->st_size = SIZE_DIR;
+    } else if (node->type == TYPE_FILE) {
+        stbuf->st_mode = S_IFREG | node->mode;
+        stbuf->st_nlink = 1;
+        stbuf->st_size = node->size;
+    }
 
     log_dbg("end");
-	return res;
+    return retVal;
 }
 
 static int ramdiskReadDir(const char *path, void *buf, fuse_fill_dir_t filler,
-			 off_t offset, struct fuse_file_info *fi)
+        off_t offset, struct fuse_file_info *fi)
 {
     log_dbg("begin path: %s", path);
 
@@ -90,7 +116,7 @@ static int ramdiskReadDir(const char *path, void *buf, fuse_fill_dir_t filler,
     for(itr = node->child.begin(); itr != node->child.end(); ++itr)
     {
         ramnode* temp_child = m_node[*itr];
-        string temp_name = getParentFromPath(temp_child->name);
+        string temp_name = getFilenameFromPath(temp_child->name);
         filler(buf, temp_name.c_str(), NULL, 0);
     }
 
@@ -125,7 +151,7 @@ static int ramdiskWrite(const char * path, const char * buf, size_t size, off_t 
 
 static int ramdiskMakeDir(const char* path, mode_t mode) 
 {
-    if(path )
+    if(path == NULL)
     {
         return -ENOENT;
     }
@@ -219,9 +245,9 @@ int createDirNode(string path, mode_t mode)
     node->mode   = mode;
 
     // Time
-    time(&node->time_create);
-    time(&node->time_access);
-    time(&node->time_modified);
+    time(&node->atime);
+    time(&node->mtime);
+    time(&node->ctime);
 
     node->data   = NULL;
 
@@ -253,7 +279,7 @@ void updateDiskSize(int size_change)
 int main(int argc, char *argv[])
 {
     log_dbg("");
-    ramdisk_oper.getattr = ramdiskGetAddr;
+    ramdisk_oper.getattr = ramdiskGetAttr;
     ramdisk_oper.readdir = ramdiskReadDir;
     ramdisk_oper.opendir = ramdiskOpenDir;
     ramdisk_oper.open    = ramdiskOpen;
@@ -267,5 +293,5 @@ int main(int argc, char *argv[])
 
     createRootNode();
 
-	return fuse_main(argc, argv, &ramdisk_oper, NULL);
+    return fuse_main(argc, argv, &ramdisk_oper, NULL);
 }

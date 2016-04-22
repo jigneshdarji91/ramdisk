@@ -23,4 +23,6 @@
 #define MODE_DIR    0755
 #define MODE_ROOT   0777
 
+#define SIZE_DIR 0
+
 #endif
