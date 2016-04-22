@@ -1,7 +1,7 @@
 all: ramdisk
 
 ramdisk: 
-	gcc -Wall ramdisk.c `pkg-config fuse --cflags --libs` -o ramdisk
+	g++ -Wall ramdisk.cpp `pkg-config fuse --cflags --libs` -o filesystem.o
 
 clean: 
-	\rm ramdisk
+	\rm filesystem.o
