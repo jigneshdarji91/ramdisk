@@ -1,7 +1,7 @@
-all: hello
+all: ramdisk
 
-hello: 
-	gcc -Wall hello.c `pkg-config fuse --cflags --libs` -o hello
+ramdisk: 
+	gcc -Wall ramdisk.c `pkg-config fuse --cflags --libs` -o ramdisk
 
 clean: 
-	\rm hello 
+	\rm ramdisk
