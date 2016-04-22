@@ -37,12 +37,13 @@ typedef enum _ramnode_type
 typedef struct _ramnode 
 {
     // ID
-    ramnode_id          id;
+    ramnode_id  id;
 
     // Metadata
-    string              name;
-    ramnode_type        type;
-    ramnode_size        size;
+    string          name;
+    ramnode_type    type;
+    ramnode_size    size;
+    mode_t          mode;
 
     //Time
     time_t  time_access;
@@ -51,6 +52,7 @@ typedef struct _ramnode
     
     list<ramnode_id>    child;
 
+    char* data;
 } ramnode;
 
 #endif /* __RAMNODE__ */
