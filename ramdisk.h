@@ -21,5 +21,6 @@
 #define __RAMDISK__
 
 void updateDiskSize(int size_change);
+void createRootNode();
 
 #endif

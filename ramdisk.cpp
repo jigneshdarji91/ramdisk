@@ -125,7 +125,7 @@ static int ramdiskCreate(const char * path, mode_t mode, struct fuse_file_info *
 
 static struct fuse_operations ramdisk_oper;
 
-int createRootNode()
+void createRootNode()
 {
     log_dbg("begin");
 
@@ -176,5 +176,9 @@ int main(int argc, char *argv[])
     ramdisk_oper.rmdir   = ramdiskRemoveDir;
     ramdisk_oper.unlink  = ramdiskUnlink;
     ramdisk_oper.create  = ramdiskCreate;
+
+
+    createRootNode();
+
 	return fuse_main(argc, argv, &ramdisk_oper, NULL);
 }
