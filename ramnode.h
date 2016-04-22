@@ -22,6 +22,8 @@
 #include <list>
 #include <string>
 
+using namespace std; 
+
 typedef unsigned int ramnode_id;
 typedef unsigned int ramnode_size;
 

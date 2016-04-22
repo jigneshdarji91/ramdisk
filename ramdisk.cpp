@@ -24,7 +24,10 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <map>
+
 #include "debug.h"
+#include "ramnode.h"
 
 static const char *hello_str = "Hello World!\n";
 static const char *hello_path = "/hello";
@@ -119,7 +122,7 @@ static int ramdiskMakeDir(const char* path, mode_t mode)
     log_dbg("end");
 }
 
-static int ramdiskRemovedir(const char * path) 
+static int ramdiskRemoveDir(const char * path) 
 {
     log_dbg("begin path: %s", path);
     log_dbg("end");
