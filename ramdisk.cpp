@@ -109,27 +109,38 @@ static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
 
 static int ramdiskWrite(const char * path, const char * buf, size_t size, off_t offset, struct fuse_file_info * fi)
 {
-
+    log_dbg("begin path: %s", path);
+    log_dbg("end");
 }
 
 static int ramdiskMakeDir(const char* path, mode_t mode) 
 {
+    log_dbg("begin path: %s", path);
+    log_dbg("end");
 }
 
 static int ramdiskRemovedir(const char * path) 
 {
+    log_dbg("begin path: %s", path);
+    log_dbg("end");
 }
 
 static int ramdiskOpenDir(const char * path, struct fuse_file_info * fi) 
 {
+    log_dbg("begin path: %s", path);
+    log_dbg("end");
 }
 
 static int ramdiskUnlink(const char * path) 
 {
+    log_dbg("begin path: %s", path);
+    log_dbg("end");
 }
 
 static int ramdiskCreate(const char * path, mode_t mode, struct fuse_file_info * fi) 
 {
+    log_dbg("begin path: %s", path);
+    log_dbg("end");
 }
 
 
