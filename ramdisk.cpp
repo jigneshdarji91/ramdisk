@@ -60,17 +60,42 @@ static int ramdiskReadDir(const char *path, void *buf, fuse_fill_dir_t filler,
 			 off_t offset, struct fuse_file_info *fi)
 {
     log_dbg("begin path: %s", path);
-	(void) offset;
-	(void) fi;
 
-	if (strcmp(path, "/") != 0)
-		return -ENOENT;
+    if(path == NULL)
+    {
+        return -ENOENT;
+    }
 
-	filler(buf, ".", NULL, 0);
-	filler(buf, "..", NULL, 0);
+    string path_string = path; 
+    if(m_path.find(path_string) == m_path.end())
+    {
+        return -ENOENT;
+    }
+
+    ramnode_id id = m_path[path_string];
+    ramnode* node = m_node[id];
+
+    if(node->type != TYPE_DIR)
+    {
+        return -ENOENT;
+    }
+
+    if(strcmp(path, "/") != 0)
+    {
+        filler(buf, ".", NULL, 0);
+        filler(buf, "..", NULL, 0);
+    }
+
+    list<ramnode_id>::const_iterator itr; 
+    for(itr = node->child.begin(); itr != node->child.end(); ++itr)
+    {
+        ramnode* temp_child = m_node[*itr];
+        string temp_name = getParentFromPath(temp_child->name);
+        filler(buf, temp_name.c_str(), NULL, 0);
+    }
 
     log_dbg("end");
-	return 0;
+    return 0;
 }
 
 static int ramdiskOpen(const char *path, struct fuse_file_info *fi)
@@ -79,15 +104,15 @@ static int ramdiskOpen(const char *path, struct fuse_file_info *fi)
     int retVal = 0;
 
     log_dbg("end");
-	return retVal;
+    return retVal;
 }
 
 static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
-		      struct fuse_file_info *fi)
+        struct fuse_file_info *fi)
 {
     log_dbg("begin path: %s", path);
     log_dbg("end");
-	return size;
+    return size;
 }
 
 static int ramdiskWrite(const char * path, const char * buf, size_t size, off_t offset, struct fuse_file_info * fi)
@@ -139,8 +164,6 @@ static int ramdiskCreate(const char * path, mode_t mode, struct fuse_file_info *
     log_dbg("end");
     return retVal;
 }
-
-
 
 string getParentFromPath(string path)
 {
