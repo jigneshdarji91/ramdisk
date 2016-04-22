@@ -25,10 +25,8 @@
 # Executables
 *.exe
 *.out
+*.o
 *.app
-*
-!/**/
-!*.*
 
 # Misc files
 *.db
