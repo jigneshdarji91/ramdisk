@@ -1,12 +1,21 @@
 /*
-  FUSE: Filesystem in Userspace
-  Copyright (C) 2001-2007  Miklos Szeredi <miklos@szeredi.hu>
-
-  This program can be distributed under the terms of the GNU GPL.
-  See the file COPYING.
-
-  gcc -Wall hello.c `pkg-config fuse --cflags --libs` -o hello
-*/
+ * =====================================================================================
+ *
+ *       Filename:  ramdisk.c
+ *
+ *    Description:  FUSE-based RAMFS
+ *
+ *        Version:  1.0
+ *        Created:  04/22/2016 12:33:25 PM
+ *      Reference:  based on the hello.c example code from FUSE 2.6
+ *       Revision:  none
+ *       Compiler:  gcc
+ *
+ *         Author:  Jignesh Darji (jignesh), jndarji@ncsu.edu
+ *   Organization:  North Carolina State University
+ *
+ * =====================================================================================
+ */
 
 #define FUSE_USE_VERSION 26
 
