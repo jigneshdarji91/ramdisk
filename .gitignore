@@ -32,3 +32,5 @@
 
 # Misc files
 *.db
+*.swp
+*.log
