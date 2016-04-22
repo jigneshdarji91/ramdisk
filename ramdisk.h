@@ -20,7 +20,16 @@
 #ifndef __RAMDISK__
 #define __RAMDISK__
 
+#include <string>
+#include "ramnode.h"
+
+using namespace std;
+
 void updateDiskSize(int size_change);
-void createRootNode();
+string getParentFromPath(string path);
+string getFilenameFromPath(string path);
+
+int createDirNode(string path, mode_t mode);
+int createRootNode();
 
 #endif

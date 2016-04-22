@@ -24,7 +24,9 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <map>
+#include <sys/stat.h>
 
 #include "ramdisk.h"
 #include "debug.h"
@@ -33,6 +35,7 @@
 
 static unsigned int ramfs_size = 0;
 static ramnode_id curr_id = 1;
+static struct fuse_operations ramdisk_oper;
 
 map<string, ramnode_id>     m_path;
 map<ramnode_id, ramnode*>   m_node;
@@ -73,9 +76,10 @@ static int ramdiskReadDir(const char *path, void *buf, fuse_fill_dir_t filler,
 static int ramdiskOpen(const char *path, struct fuse_file_info *fi)
 {
     log_dbg("begin path: %s", path);
+    int retVal = 0;
 
     log_dbg("end");
-	return 0;
+	return retVal;
 }
 
 static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
@@ -89,72 +93,132 @@ static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
 static int ramdiskWrite(const char * path, const char * buf, size_t size, off_t offset, struct fuse_file_info * fi)
 {
     log_dbg("begin path: %s", path);
+    int retVal = 0;
     log_dbg("end");
+    return retVal;
 }
 
 static int ramdiskMakeDir(const char* path, mode_t mode) 
 {
-    log_dbg("begin path: %s", path);
-    log_dbg("end");
+    if(path )
+    {
+        return -ENOENT;
+    }
+    string path_string = path;
+    return createDirNode(path_string, mode);
 }
 
 static int ramdiskRemoveDir(const char * path) 
 {
     log_dbg("begin path: %s", path);
+    int retVal = 0;
     log_dbg("end");
+    return retVal;
 }
 
 static int ramdiskOpenDir(const char * path, struct fuse_file_info * fi) 
 {
     log_dbg("begin path: %s", path);
+    int retVal = 0;
     log_dbg("end");
+    return retVal;
 }
 
 static int ramdiskUnlink(const char * path) 
 {
     log_dbg("begin path: %s", path);
+    int retVal = 0;
     log_dbg("end");
+    return retVal;
 }
 
 static int ramdiskCreate(const char * path, mode_t mode, struct fuse_file_info * fi) 
 {
     log_dbg("begin path: %s", path);
+    int retVal = 0;
     log_dbg("end");
+    return retVal;
 }
 
 
-static struct fuse_operations ramdisk_oper;
 
-void createRootNode()
+string getParentFromPath(string path)
+{
+    char* path_str  = strdup(path.c_str());
+    char* dir       = dirname(path_str);
+    string parent(dir);
+
+    log_dbg("path: %s parent: %s", path.c_str(), parent.c_str());
+    return parent; 
+}
+
+string getFilenameFromPath(string path)
+{
+    char* path_str  = strdup(path.c_str());
+    char* fname       = basename(path_str);
+    string filename(fname);
+
+    log_dbg("path: %s filename: %s", path.c_str() , filename.c_str());
+    return filename; 
+}
+
+int createDirNode(string path, mode_t mode)
+{
+    log_dbg("begin path: %s mode: %d", path.c_str(), mode);
+
+    int retVal = 0;
+
+    if(path.compare("/") != 0)
+    {
+        string parent(getParentFromPath(path));
+        string fname(getFilenameFromPath(path));
+
+        if(m_path.find(parent) == m_path.end())
+        {
+            return -ENOENT;
+        }
+
+        ramnode_id parent_id = m_path[parent];
+        ramnode *parent_node = m_node[parent_id];
+
+        parent_node->child.push_back(curr_id);
+    }
+
+    ramnode *node = new ramnode();
+
+    // ID
+    node->id = curr_id++;
+
+    // Metadata
+    node->name   = path;
+    node->type   = TYPE_DIR; 
+    node->size   = 0;
+    node->mode   = mode;
+
+    // Time
+    time(&node->time_create);
+    time(&node->time_access);
+    time(&node->time_modified);
+
+    node->data   = NULL;
+
+    //Update disk size
+    updateDiskSize(sizeof(ramnode) + node->name.length());
+
+    // Update Maps
+    m_path[node->name]   = node->id;
+    m_node[node->id]     = node;
+
+    log_dbg("end");
+    return retVal; 
+}
+
+int createRootNode()
 {
     log_dbg("begin");
 
-    string root_name = "/";
-
-    ramnode *root = new ramnode();
-
-    // ID
-    root->id = curr_id++;
-
-    // Metadata
-    root->name   = root_name;
-    root->type   = TYPE_DIR; 
-    root->size   = 0;
-    root->mode   = MODE_ROOT;
-
-    // Time
-    time(&root->time_create);
-    time(&root->time_access);
-    time(&root->time_modified);
-
-    root->data   = NULL;
-
-    m_path[root->name]   = root->id;
-    m_node[root->id]     = root;
-
-    updateDiskSize(sizeof(ramnode) + root->name.length());
-
-    log_dbg("end");
+    string root_path = "/";
+    return createDirNode(root_path, ACCESSPERMS);
 }
 
 void updateDiskSize(int size_change)
