@@ -194,9 +194,48 @@ static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
 static int ramdiskWrite(const char * path, const char * buf, size_t size, off_t offset, struct fuse_file_info * fi)
 {
     log_dbg("begin path: %s", path);
-    int retVal = 0;
-    log_dbg("end");
-    return retVal;
+    
+    if(path == NULL)
+    {
+        return -ENOENT;
+    }
+
+    string path_string = path; 
+    if(m_path.find(path_string) == m_path.end())
+    {
+        return -ENOENT;
+    }
+
+    ramnode_id id = m_path[path_string];
+    ramnode* node = m_node[id];
+
+    // check if it's a directory
+    if(node->type == TYPE_DIR)
+    {
+        return -ENOENT;
+    }
+
+    if(ramfs_size + size > ramfs_max_size)
+    {
+        return -ENOSPC;
+    }
+
+    if(node->data == NULL)
+    {
+        node->data = (char*) malloc(size);
+        memcpy(node->data, buf, size);
+    }
+    else
+    {
+        node->data = (char*) realloc(node->data, offset + size);
+        memcpy(node->data + offset, buf, size);
+    }
+
+    ramfs_size += offset + size - node->size;
+    node->size = offset + size;
+
+    log_dbg("end ramfs_size: %d", ramfs_size);
+    return size;
 }
 
 static int ramdiskMakeDir(const char* path, mode_t mode) 
