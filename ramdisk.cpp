@@ -295,6 +295,7 @@ static int ramdiskRemoveDir(const char * path)
     // No deletion allowed if directory isn't empty
     if(!node->child.empty())
     {
+        log_err("NOT EMPTY");
         return -EPERM;
     }
 
@@ -397,6 +398,7 @@ static int ramdiskUnlink(const char * path)
    
     // Update disk size
     ramfs_size -= freed_size;
+
     log_dbg("end ramfs_size: %d", ramfs_size);
     return retVal;
 }
@@ -469,6 +471,12 @@ static int ramdiskCreate(const char * path_c, mode_t mode, struct fuse_file_info
 
     log_dbg("end ramfs_size: %d", ramfs_size);
     return retVal; 
+}
+
+static int ramdiskFlush(const char* path, struct fuse_file_info* fi)
+{
+    log_dbg();
+    return 0;
 }
 
 string getParentFromPath(string path)
@@ -567,11 +575,11 @@ int main(int argc, char *argv[])
 {
     log_dbg("");
 
-    //FIXME: uncomment
-    //if (argc != 3) 
+    if (argc != 3) 
     {
         cout << "Usage: ./ramdisk <dir> <size(MB)>" << endl;
-        exit(-1);
+        //FIXME: uncomment
+        //exit(-1);
     }
 
     int disk_size = 500; // FIXME: atoi(argv[2]);
@@ -587,6 +595,7 @@ int main(int argc, char *argv[])
     ramdisk_oper.rmdir   = ramdiskRemoveDir;
     ramdisk_oper.unlink  = ramdiskUnlink;
     ramdisk_oper.create  = ramdiskCreate;
+    ramdisk_oper.flush   = ramdiskFlush;
 
     createRootNode();
 
