@@ -27,6 +27,7 @@
 #include <libgen.h>
 #include <map>
 #include <sys/stat.h>
+#include <malloc.h>
 
 #include "ramdisk.h"
 #include "debug.h"
@@ -162,8 +163,53 @@ static int ramdiskMakeDir(const char* path, mode_t mode)
 static int ramdiskRemoveDir(const char * path) 
 {
     log_dbg("begin path: %s", path);
+    
     int retVal = 0;
-    log_dbg("end");
+
+    if(path == NULL)
+    {
+        return -ENOENT;
+    }
+
+    string path_string = path; 
+    if(m_path.find(path_string) == m_path.end())
+    {
+        return -ENOENT;
+    }
+
+    ramnode_id id = m_path[path_string];
+    ramnode* node = m_node[id];
+
+    // check if it's a directory
+    if(node->type != TYPE_DIR)
+    {
+        return -ENOENT;
+    }
+
+    // No deletion allowed if directory isn't empty
+    if(!node->child.empty())
+    {
+        return -EPERM;
+    }
+
+    // Remove from parent's list
+    string parent = getParentFromPath(path_string);
+    ramnode_id parent_id = m_path[parent];
+    ramnode* parent_node = m_node[parent_id];
+
+    parent_node->child.remove(id);
+
+    // Remove from maps
+    m_path.erase(path_string);
+    m_node.erase(id);
+
+    // Free the memory allocated
+    free(node->data);
+    delete node;
+   
+    // Update disk size
+    ramfs_size -= sizeof(ramnode);
+    log_dbg("end ramfs_size: %d", ramfs_size);
     return retVal;
 }
 
@@ -252,7 +298,7 @@ int createDirNode(string path, mode_t mode)
     node->data   = NULL;
 
     //Update disk size
-    updateDiskSize(sizeof(ramnode) + node->name.length());
+    ramfs_size += sizeof(ramnode);
 
     // Update Maps
     m_path[node->name]   = node->id;
@@ -268,12 +314,6 @@ int createRootNode()
 
     string root_path = "/";
     return createDirNode(root_path, ACCESSPERMS);
-}
-
-void updateDiskSize(int size_change)
-{
-    ramfs_size += size_change;
-    log_dbg("new: %d change:%d", ramfs_size, size_change);
 }
 
 int main(int argc, char *argv[])
