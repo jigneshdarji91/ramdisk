@@ -217,6 +217,7 @@ static int ramdiskWrite(const char * path, const char * buf, size_t size, off_t 
 
     if(ramfs_size + size > ramfs_max_size)
     {
+        log_err("NO SPACE");
         return -ENOSPC;
     }
 
@@ -406,6 +407,7 @@ static int ramdiskCreate(const char * path_c, mode_t mode, struct fuse_file_info
     int fs_size = ramfs_size + sizeof(ramnode);
     if(fs_size > ramfs_max_size)
     {
+        log_err("NO SPACE");
         return -ENOSPC;
     }
 
@@ -486,6 +488,7 @@ int createDirNode(string path, mode_t mode)
     int fs_size = ramfs_size + sizeof(ramnode);
     if(fs_size > ramfs_max_size)
     {
+        log_err("NO SPACE");
         return -ENOSPC;
     }
 
