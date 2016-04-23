@@ -50,13 +50,14 @@ static int ramdiskGetAttr(const char *path, struct stat *stbuf)
 
     if(path == NULL)
     {
+        log_err("Path is EMPTY");
         return -ENOENT;
     }
 
     string path_string = path; 
     if(m_path.find(path_string) == m_path.end())
     {
-        log_err("path: %s NOT FOUND", path);
+        log_inf("DOESN'T EXIST");
         return -ENOENT;
     }
 
@@ -65,8 +66,8 @@ static int ramdiskGetAttr(const char *path, struct stat *stbuf)
     ramnode_id id = m_path[path_string];
     ramnode* node = m_node[id];
 
-    stbuf->st_uid = 0;
-    stbuf->st_gid = 0;
+    stbuf->st_uid = node->uid;
+    stbuf->st_gid = node->gid;
     stbuf->st_atime = node->atime;
     stbuf->st_mtime = node->mtime;
     stbuf->st_ctime = node->ctime;
@@ -92,12 +93,14 @@ static int ramdiskReadDir(const char *path, void *buf, fuse_fill_dir_t filler,
 
     if(path == NULL)
     {
+        log_err("Path is EMPTY");
         return -ENOENT;
     }
 
     string path_string = path; 
     if(m_path.find(path_string) == m_path.end())
     {
+        log_err("path: %s NOT FOUND", path);
         return -ENOENT;
     }
 
@@ -106,6 +109,7 @@ static int ramdiskReadDir(const char *path, void *buf, fuse_fill_dir_t filler,
 
     if(node->type != TYPE_DIR)
     {
+        log_err("It's NOT a DIRECTORY");
         return -ENOENT;
     }
 
@@ -135,12 +139,14 @@ static int ramdiskOpen(const char *path, struct fuse_file_info *fi)
 
     if(path == NULL)
     {
+        log_err("Path is EMPTY");
         return -ENOENT;
     }
 
     string path_string = path; 
     if(m_path.find(path_string) == m_path.end())
     {
+        log_err("path: %s NOT FOUND", path);
         return -ENOENT;
     }
 
@@ -150,6 +156,7 @@ static int ramdiskOpen(const char *path, struct fuse_file_info *fi)
     // check if it's a directory
     if(node->type == TYPE_DIR)
     {
+        log_err("It's a DIRECTORY");
         return -ENOENT;
     }
 
@@ -160,16 +167,18 @@ static int ramdiskOpen(const char *path, struct fuse_file_info *fi)
 static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
         struct fuse_file_info *fi)
 {
-    log_dbg("begin path: %s", path);
+    log_dbg("begin path: %s size: %d offset: %d", path, size, offset);
     
     if(path == NULL)
     {
+        log_err("Path is EMPTY");
         return -ENOENT;
     }
 
     string path_string = path; 
     if(m_path.find(path_string) == m_path.end())
     {
+        log_err("DOESN'T EXIST");
         return -ENOENT;
     }
 
@@ -179,6 +188,7 @@ static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
     // check if it's a directory
     if(node->type == TYPE_DIR)
     {
+        log_err("It's a DIRECTORY");
         return -ENOENT;
     }
 
@@ -187,22 +197,24 @@ static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
     
     memcpy(buf, node->data + offset, size);
 
-    log_dbg("end");
+    log_dbg("end size: %d", size);
     return size;
 }
 
 static int ramdiskWrite(const char * path, const char * buf, size_t size, off_t offset, struct fuse_file_info * fi)
 {
-    log_dbg("begin path: %s", path);
+    log_dbg("begin path: %s offset: %d size: %d", path, offset, size);
     
     if(path == NULL)
     {
+        log_err("Path is EMPTY");
         return -ENOENT;
     }
 
     string path_string = path; 
     if(m_path.find(path_string) == m_path.end())
     {
+        log_err("DOESN'T EXIST");
         return -ENOENT;
     }
 
@@ -212,6 +224,7 @@ static int ramdiskWrite(const char * path, const char * buf, size_t size, off_t 
     // check if it's a directory
     if(node->type == TYPE_DIR)
     {
+        log_err("It's a DIRECTORY");
         return -ENOENT;
     }
 
@@ -235,7 +248,7 @@ static int ramdiskWrite(const char * path, const char * buf, size_t size, off_t 
     ramfs_size += offset + size - node->size;
     node->size = offset + size;
 
-    log_dbg("end ramfs_size: %d", ramfs_size);
+    log_dbg("end size: %d ramfs_size: %d", size, ramfs_size);
     return size;
 }
 
@@ -243,6 +256,7 @@ static int ramdiskMakeDir(const char* path, mode_t mode)
 {
     if(path == NULL)
     {
+        log_err("Path is EMPTY");
         return -ENOENT;
     }
     string path_string = path;
@@ -257,12 +271,14 @@ static int ramdiskRemoveDir(const char * path)
 
     if(path == NULL)
     {
+        log_err("Path is EMPTY");
         return -ENOENT;
     }
 
     string path_string = path; 
     if(m_path.find(path_string) == m_path.end())
     {
+        log_err("DOESN'T EXIST");
         return -ENOENT;
     }
 
@@ -272,6 +288,7 @@ static int ramdiskRemoveDir(const char * path)
     // check if it's a directory
     if(node->type != TYPE_DIR)
     {
+        log_err("It's NOT a DIRECTORY");
         return -ENOENT;
     }
 
@@ -308,12 +325,14 @@ static int ramdiskOpenDir(const char * path, struct fuse_file_info * fi)
     int retVal = 0;
     if(path == NULL)
     {
+        log_err("Path is EMPTY");
         return -ENOENT;
     }
 
     string path_string = path; 
     if(m_path.find(path_string) == m_path.end())
     {
+        log_err("DOESN'T EXIST");
         return -ENOENT;
     }
 
@@ -322,6 +341,7 @@ static int ramdiskOpenDir(const char * path, struct fuse_file_info * fi)
 
     if(node->type != TYPE_DIR)
     {
+        log_err("It's NOT a DIRECTORY");
         return -ENOENT;
     }
 
@@ -337,12 +357,14 @@ static int ramdiskUnlink(const char * path)
 
     if(path == NULL)
     {
+        log_err("Path is EMPTY");
         return -ENOENT;
     }
 
     string path_string = path; 
     if(m_path.find(path_string) == m_path.end())
     {
+        log_err("DOESN'T EXIST");
         return -ENOENT;
     }
 
@@ -352,6 +374,7 @@ static int ramdiskUnlink(const char * path)
     // check if it's a directory
     if(node->type == TYPE_DIR)
     {
+        log_err("It's a DIRECTORY");
         return -ENOENT;
     }
 
@@ -391,6 +414,7 @@ static int ramdiskCreate(const char * path_c, mode_t mode, struct fuse_file_info
     // check whether parent exists
     if(m_path.find(parent) == m_path.end())
     {
+        log_err("DOESN'T EXIST");
         return -ENOENT;
     }
 
@@ -400,6 +424,7 @@ static int ramdiskCreate(const char * path_c, mode_t mode, struct fuse_file_info
 
     if(parent_node->type != TYPE_DIR)
     {
+        log_err("It's NOT a DIRECTORY");
         return -ENOENT;
     }
 
@@ -423,6 +448,10 @@ static int ramdiskCreate(const char * path_c, mode_t mode, struct fuse_file_info
     node->type   = TYPE_FILE; 
     node->size   = 0;
     node->mode   = S_IFREG | mode;
+
+    // owner info
+    node->gid = fuse_get_context()->gid;
+    node->uid = fuse_get_context()->uid;
 
     // Time
     time(&node->atime);
@@ -475,6 +504,7 @@ int createDirNode(string path, mode_t mode)
 
         if(m_path.find(parent) == m_path.end())
         {
+            log_err("DOESN'T EXIST");
             return -ENOENT;
         }
 
@@ -502,6 +532,10 @@ int createDirNode(string path, mode_t mode)
     node->type   = TYPE_DIR; 
     node->size   = 0;
     node->mode   = S_IFDIR | mode;
+
+    // owner info
+    node->gid = fuse_get_context()->gid;
+    node->uid = fuse_get_context()->uid;
 
     // Time
     time(&node->atime);
@@ -533,12 +567,14 @@ int main(int argc, char *argv[])
 {
     log_dbg("");
 
-    if (argc != 3) {
+    //FIXME: uncomment
+    //if (argc != 3) 
+    {
         cout << "Usage: ./ramdisk <dir> <size(MB)>" << endl;
         exit(-1);
     }
 
-    int disk_size = atoi(argv[2]);
+    int disk_size = 500; // FIXME: atoi(argv[2]);
     ramfs_max_size = disk_size * 1024 * 1024;
 
     ramdisk_oper.getattr = ramdiskGetAttr;
@@ -558,5 +594,7 @@ int main(int argc, char *argv[])
     char *new_argv[2];
     new_argv[0] = argv[0];
     new_argv[1] = argv[1];
-    return fuse_main(new_argc, new_argv, &ramdisk_oper, NULL);
+    //return fuse_main(new_argc, new_argv, &ramdisk_oper, NULL);
+    return fuse_main(argc, argv, &ramdisk_oper, NULL);
 }
+
