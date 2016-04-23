@@ -192,7 +192,7 @@ static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
         return -ENOENT;
     }
 
-    if(node->size - offset - size < 0)
+    if(node->size - offset <= size)
         size = node->size - offset;
     
     memcpy(buf, node->data + offset, size);
