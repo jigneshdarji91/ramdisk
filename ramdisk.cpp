@@ -226,8 +226,49 @@ static int ramdiskOpenDir(const char * path, struct fuse_file_info * fi)
 static int ramdiskUnlink(const char * path) 
 {
     log_dbg("begin path: %s", path);
+    
     int retVal = 0;
-    log_dbg("end");
+
+    if(path == NULL)
+    {
+        return -ENOENT;
+    }
+
+    string path_string = path; 
+    if(m_path.find(path_string) == m_path.end())
+    {
+        return -ENOENT;
+    }
+
+    ramnode_id id = m_path[path_string];
+    ramnode* node = m_node[id];
+
+    // check if it's a directory
+    if(node->type == TYPE_DIR)
+    {
+        return -ENOENT;
+    }
+
+    // Remove from parent's list
+    string parent = getParentFromPath(path_string);
+    ramnode_id parent_id = m_path[parent];
+    ramnode* parent_node = m_node[parent_id];
+
+    parent_node->child.remove(id);
+
+    // Remove from maps
+    m_path.erase(path_string);
+    m_node.erase(id);
+
+    unsigned int freed_size = sizeof(ramnode) + node->size; 
+
+    // Free the memory allocated
+    free(node->data);
+    delete node;
+   
+    // Update disk size
+    ramfs_size -= freed_size;
+    log_dbg("end ramfs_size: %d", ramfs_size);
     return retVal;
 }
 
