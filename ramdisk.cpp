@@ -19,6 +19,8 @@
 
 #define FUSE_USE_VERSION 26
 
+#include <iostream>
+#include <cstdlib>
 #include <fuse.h>
 #include <stdio.h>
 #include <string.h>
@@ -35,9 +37,9 @@
 #include "constants.h"
 
 static unsigned int ramfs_size = 0;
+static unsigned int ramfs_max_size = 0;
 static ramnode_id curr_id = 1;
 static struct fuse_operations ramdisk_oper;
-
 map<string, ramnode_id>     m_path;
 map<ramnode_id, ramnode*>   m_node;
 
@@ -229,12 +231,67 @@ static int ramdiskUnlink(const char * path)
     return retVal;
 }
 
-static int ramdiskCreate(const char * path, mode_t mode, struct fuse_file_info * fi) 
+static int ramdiskCreate(const char * path_c, mode_t mode, struct fuse_file_info * fi) 
 {
-    log_dbg("begin path: %s", path);
+    log_dbg("begin path: %s mode: %d", path_c, mode);
+
     int retVal = 0;
-    log_dbg("end");
-    return retVal;
+
+    string path = path_c;
+    string parent(getParentFromPath(path));
+    string fname(getFilenameFromPath(path));
+
+    // check whether parent exists
+    if(m_path.find(parent) == m_path.end())
+    {
+        return -ENOENT;
+    }
+
+    // Check whether parent is a directory
+    ramnode_id parent_id = m_path[parent];
+    ramnode *parent_node = m_node[parent_id];
+
+    if(parent_node->type != TYPE_DIR)
+    {
+        return -ENOENT;
+    }
+
+    // Create only if within limits
+    unsigned int fs_size = ramfs_size + sizeof(ramnode);
+    if(fs_size > ramfs_max_size)
+    {
+        return -ENOSPC;
+    }
+
+
+    parent_node->child.push_back(curr_id);
+    ramnode *node = new ramnode();
+
+    // ID
+    node->id = curr_id++;
+
+    // Metadata
+    node->name   = path;
+    node->type   = TYPE_FILE; 
+    node->size   = 0;
+    node->mode   = S_IFREG | mode;
+
+    // Time
+    time(&node->atime);
+    time(&node->mtime);
+    time(&node->ctime);
+
+    node->data   = NULL;
+
+    //Update disk size
+    ramfs_size = fs_size;
+
+    // Update Maps
+    m_path[node->name]   = node->id;
+    m_node[node->id]     = node;
+
+    log_dbg("end ramfs_size: %d", ramfs_size);
+    return retVal; 
 }
 
 string getParentFromPath(string path)
@@ -280,7 +337,7 @@ int createDirNode(string path, mode_t mode)
     }
 
     // Create only if within limits
-    int fs_size = ramfs_size + sizeof(ramnode);
+    unsigned int fs_size = ramfs_size + sizeof(ramnode);
     if(fs_size > ramfs_max_size)
     {
         return -ENOSPC;
@@ -317,7 +374,7 @@ int createDirNode(string path, mode_t mode)
 
 int createRootNode()
 {
-    log_dbg("begin");
+    log_dbg("");
 
     string root_path = "/";
     return createDirNode(root_path, ACCESSPERMS);
@@ -326,6 +383,15 @@ int createRootNode()
 int main(int argc, char *argv[])
 {
     log_dbg("");
+
+    if (argc != 3) {
+        cout << "Usage: ./ramdisk <dir> <size(MB)>" << endl;
+        exit(-1);
+    }
+
+    unsigned int disk_size = atoi(argv[2]);
+    ramfs_max_size = disk_size * 1024 * 1024;
+
     ramdisk_oper.getattr = ramdiskGetAttr;
     ramdisk_oper.readdir = ramdiskReadDir;
     ramdisk_oper.opendir = ramdiskOpenDir;
@@ -337,8 +403,11 @@ int main(int argc, char *argv[])
     ramdisk_oper.unlink  = ramdiskUnlink;
     ramdisk_oper.create  = ramdiskCreate;
 
-
     createRootNode();
 
-    return fuse_main(argc, argv, &ramdisk_oper, NULL);
+    int new_argc = argc - 1;
+    char *new_argv[2];
+    new_argv[0] = argv[0];
+    new_argv[1] = argv[1];
+    return fuse_main(new_argc, new_argv, &ramdisk_oper, NULL);
 }
