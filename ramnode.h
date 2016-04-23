@@ -45,11 +45,7 @@ typedef struct _ramnode
     ramnode_size    size;
     mode_t          mode;
 
-    // Owner
-    uid_t uid;
-    gid_t gid;
-
-    // Time
+    //Time
     time_t  atime;
     time_t  mtime;
     time_t  ctime;
