@@ -130,7 +130,28 @@ static int ramdiskReadDir(const char *path, void *buf, fuse_fill_dir_t filler,
 static int ramdiskOpen(const char *path, struct fuse_file_info *fi)
 {
     log_dbg("begin path: %s", path);
+    
     int retVal = 0;
+
+    if(path == NULL)
+    {
+        return -ENOENT;
+    }
+
+    string path_string = path; 
+    if(m_path.find(path_string) == m_path.end())
+    {
+        return -ENOENT;
+    }
+
+    ramnode_id id = m_path[path_string];
+    ramnode* node = m_node[id];
+
+    // check if it's a directory
+    if(node->type == TYPE_DIR)
+    {
+        return -ENOENT;
+    }
 
     log_dbg("end");
     return retVal;
