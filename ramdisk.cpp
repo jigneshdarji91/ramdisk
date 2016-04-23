@@ -498,7 +498,7 @@ int createDirNode(string path, mode_t mode)
     node->name   = path;
     node->type   = TYPE_DIR; 
     node->size   = 0;
-    node->mode   = mode;
+    node->mode   = S_IFDIR | mode;
 
     // Time
     time(&node->atime);
