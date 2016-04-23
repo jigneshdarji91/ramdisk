@@ -25,7 +25,7 @@
 using namespace std; 
 
 typedef unsigned int ramnode_id;
-typedef unsigned int ramnode_size;
+typedef int ramnode_size;
 
 typedef enum _ramnode_type 
 {

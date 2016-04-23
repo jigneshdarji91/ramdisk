@@ -36,8 +36,8 @@
 #include "ramnode.h"
 #include "constants.h"
 
-static unsigned int ramfs_size = 0;
-static unsigned int ramfs_max_size = 0;
+static int ramfs_size = 0;
+static int ramfs_max_size = 0;
 static ramnode_id curr_id = 1;
 static struct fuse_operations ramdisk_oper;
 map<string, ramnode_id>     m_path;
@@ -161,6 +161,32 @@ static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
         struct fuse_file_info *fi)
 {
     log_dbg("begin path: %s", path);
+    
+    if(path == NULL)
+    {
+        return -ENOENT;
+    }
+
+    string path_string = path; 
+    if(m_path.find(path_string) == m_path.end())
+    {
+        return -ENOENT;
+    }
+
+    ramnode_id id = m_path[path_string];
+    ramnode* node = m_node[id];
+
+    // check if it's a directory
+    if(node->type == TYPE_DIR)
+    {
+        return -ENOENT;
+    }
+
+    if(node->size - offset - size < 0)
+        size = node->size - offset;
+    
+    memcpy(buf, node->data + offset, size);
+
     log_dbg("end");
     return size;
 }
@@ -281,7 +307,7 @@ static int ramdiskUnlink(const char * path)
     m_path.erase(path_string);
     m_node.erase(id);
 
-    unsigned int freed_size = sizeof(ramnode) + node->size; 
+    int freed_size = sizeof(ramnode) + node->size; 
 
     // Free the memory allocated
     free(node->data);
@@ -319,7 +345,7 @@ static int ramdiskCreate(const char * path_c, mode_t mode, struct fuse_file_info
     }
 
     // Create only if within limits
-    unsigned int fs_size = ramfs_size + sizeof(ramnode);
+    int fs_size = ramfs_size + sizeof(ramnode);
     if(fs_size > ramfs_max_size)
     {
         return -ENOSPC;
@@ -399,7 +425,7 @@ int createDirNode(string path, mode_t mode)
     }
 
     // Create only if within limits
-    unsigned int fs_size = ramfs_size + sizeof(ramnode);
+    int fs_size = ramfs_size + sizeof(ramnode);
     if(fs_size > ramfs_max_size)
     {
         return -ENOSPC;
@@ -451,7 +477,7 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    unsigned int disk_size = atoi(argv[2]);
+    int disk_size = atoi(argv[2]);
     ramfs_max_size = disk_size * 1024 * 1024;
 
     ramdisk_oper.getattr = ramdiskGetAttr;
