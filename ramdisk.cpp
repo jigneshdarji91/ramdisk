@@ -279,6 +279,13 @@ int createDirNode(string path, mode_t mode)
         parent_node->child.push_back(curr_id);
     }
 
+    // Create only if within limits
+    int fs_size = ramfs_size + sizeof(ramnode);
+    if(fs_size > ramfs_max_size)
+    {
+        return -ENOSPC;
+    }
+
     ramnode *node = new ramnode();
 
     // ID
