@@ -368,7 +368,7 @@ int createDirNode(string path, mode_t mode)
     m_path[node->name]   = node->id;
     m_node[node->id]     = node;
 
-    log_dbg("end");
+    log_dbg("end ramfs_size: %d", ramfs_size);
     return retVal; 
 }
 
