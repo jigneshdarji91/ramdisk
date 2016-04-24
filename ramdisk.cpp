@@ -167,7 +167,7 @@ static int ramdiskOpen(const char *path, struct fuse_file_info *fi)
 static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
         struct fuse_file_info *fi)
 {
-    log_dbg("begin path: %s size: %d offset: %d", path, size, offset);
+    log_dbg("begin path: %s size: %d offset: %d", path, (int) size, (int) offset);
     
     if(path == NULL)
     {
@@ -192,18 +192,18 @@ static int ramdiskRead(const char *path, char *buf, size_t size, off_t offset,
         return -ENOENT;
     }
 
-    if(node->size - offset <= size)
+    if(node->size - offset <= (unsigned int) size)
         size = node->size - offset;
     
     memcpy(buf, node->data + offset, size);
 
-    log_dbg("end size: %d", size);
+    log_dbg("end size: %d", (int)size);
     return size;
 }
 
 static int ramdiskWrite(const char * path, const char * buf, size_t size, off_t offset, struct fuse_file_info * fi)
 {
-    log_dbg("begin path: %s offset: %d size: %d", path, offset, size);
+    log_dbg("begin path: %s offset: %d size: %d", path, (int) offset, (int)size);
     
     if(path == NULL)
     {
@@ -228,7 +228,7 @@ static int ramdiskWrite(const char * path, const char * buf, size_t size, off_t 
         return -ENOENT;
     }
 
-    if(ramfs_size + size > ramfs_max_size)
+    if(ramfs_size + size > (unsigned int) ramfs_max_size)
     {
         log_err("NO SPACE");
         return -ENOSPC;
@@ -248,7 +248,7 @@ static int ramdiskWrite(const char * path, const char * buf, size_t size, off_t 
     ramfs_size += offset + size - node->size;
     node->size = offset + size;
 
-    log_dbg("end size: %d ramfs_size: %d", size, ramfs_size);
+    log_dbg("end size: %d ramfs_size: %d", (int) size, ramfs_size);
     return size;
 }
 
@@ -578,11 +578,10 @@ int main(int argc, char *argv[])
     if (argc != 3) 
     {
         cout << "Usage: ./ramdisk <dir> <size(MB)>" << endl;
-        //FIXME: uncomment
-        //exit(-1);
+        exit(-1);
     }
 
-    int disk_size = 500; // FIXME: atoi(argv[2]);
+    int disk_size = atoi(argv[2]);
     ramfs_max_size = disk_size * 1024 * 1024;
 
     ramdisk_oper.getattr = ramdiskGetAttr;
@@ -603,7 +602,6 @@ int main(int argc, char *argv[])
     char *new_argv[2];
     new_argv[0] = argv[0];
     new_argv[1] = argv[1];
-    //return fuse_main(new_argc, new_argv, &ramdisk_oper, NULL);
-    return fuse_main(argc, argv, &ramdisk_oper, NULL);
+    return fuse_main(new_argc, new_argv, &ramdisk_oper, NULL);
 }
 
