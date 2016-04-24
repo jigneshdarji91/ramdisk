@@ -10,4 +10,4 @@ tar:
 	tar czvf jndarji_ramdisk.tar.gz ramdisk.h ramdisk.cpp ramnode.h ramnode.cpp debug.h constants.h Makefile README REFERENCES postmark.c 
 
 clean: 
-	\rm *.o
+	\rm ramdisk
