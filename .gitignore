@@ -27,6 +27,8 @@
 *.out
 *.o
 *.app
+ramdisk
+postmark
 
 # Misc files
 *.db
@@ -34,3 +36,4 @@
 *.log
 tags
 core.*
+*.tar.gz
